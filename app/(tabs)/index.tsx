@@ -17,7 +17,7 @@ import {
   Image,
 } from 'react-native';
 import { router, useFocusEffect, Tabs } from 'expo-router';
-import { Dices, ChefHat, RefreshCw, Plus } from 'lucide-react-native';
+import { Dices, RefreshCw, Plus } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useDishStore } from '@/store/useDishStore';

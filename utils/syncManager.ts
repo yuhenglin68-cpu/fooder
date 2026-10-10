@@ -93,6 +93,7 @@ export async function importDishesFromFile(fileUri: string): Promise<Dish[] | nu
         ingredients: item.ingredients || [],
         steps: item.steps || '',
         imageUri: localImageUri,
+        createdAt: item.createdAt || Date.now(),
       };
       importedDishes.push(dish);
     }

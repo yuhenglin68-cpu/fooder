@@ -290,3 +290,11 @@ export function upsertDishes(dishes: Dish[]): void {
     }
   });
 }
+
+/**
+ * 清空整个数据库
+ */
+export function clearDatabase(): void {
+  const db = getDatabase();
+  db.runSync(`DELETE FROM dishes;`);
+}

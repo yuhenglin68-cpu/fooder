@@ -78,7 +78,15 @@ export default function RootLayout() {
           <Stack.Screen
             name="add-dish"
             options={{
-              title: '新建菜品',
+              title: '新建菜谱',
+              headerBackTitle: '返回',
+              presentation: 'card',
+            }}
+          />
+          <Stack.Screen
+            name="edit-dish"
+            options={{
+              title: '编辑菜谱',
               headerBackTitle: '返回',
               presentation: 'card',
             }}

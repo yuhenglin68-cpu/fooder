@@ -25,6 +25,39 @@ import { useDishStore } from '@/store/useDishStore';
 
 import { exportDishes, pickAndImportDishes } from '@/utils/syncManager';
 
+const SettingsItem = ({ 
+  icon, 
+  iconBg, 
+  title, 
+  onPress, 
+  isLast = false,
+  isDestructive = false
+}: {
+  icon: React.ReactNode;
+  iconBg: string;
+  title: string;
+  onPress: () => void;
+  isLast?: boolean;
+  isDestructive?: boolean;
+}) => (
+  <Pressable
+    onPress={onPress}
+    className={`flex-row items-center px-4 py-3.5 bg-white dark:bg-[#1C1C1E] active:bg-neutral-100 dark:active:bg-[#2C2C2E] ${
+      !isLast ? 'border-b border-black/[0.04] dark:border-white/[0.06]' : ''
+    }`}
+  >
+    <View className={`w-[30px] h-[30px] rounded-lg items-center justify-center mr-3.5 ${iconBg}`}>
+      {icon}
+    </View>
+    <View className="flex-1 flex-row items-center justify-between">
+      <Text className={`text-[17px] font-medium ${isDestructive ? 'text-red-500' : 'text-neutral-900 dark:text-white'}`}>
+        {title}
+      </Text>
+      <ChevronRight size={18} color="#C7C7CC" />
+    </View>
+  </Pressable>
+);
+
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
@@ -66,39 +99,6 @@ export default function SettingsScreen() {
       ]
     );
   };
-
-  const SettingsItem = ({ 
-    icon, 
-    iconBg, 
-    title, 
-    onPress, 
-    isLast = false,
-    isDestructive = false
-  }: {
-    icon: React.ReactNode;
-    iconBg: string;
-    title: string;
-    onPress: () => void;
-    isLast?: boolean;
-    isDestructive?: boolean;
-  }) => (
-    <Pressable
-      onPress={onPress}
-      className={`flex-row items-center px-4 py-3.5 bg-white dark:bg-[#1C1C1E] active:bg-neutral-100 dark:active:bg-[#2C2C2E] ${
-        !isLast ? 'border-b border-black/[0.04] dark:border-white/[0.06]' : ''
-      }`}
-    >
-      <View className={`w-[30px] h-[30px] rounded-lg items-center justify-center mr-3.5 ${iconBg}`}>
-        {icon}
-      </View>
-      <View className="flex-1 flex-row items-center justify-between">
-        <Text className={`text-[17px] font-medium ${isDestructive ? 'text-red-500' : 'text-neutral-900 dark:text-white'}`}>
-          {title}
-        </Text>
-        <ChevronRight size={18} color="#C7C7CC" />
-      </View>
-    </Pressable>
-  );
 
   return (
     <ScrollView 

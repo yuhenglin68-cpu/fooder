@@ -18,6 +18,7 @@ import {
   Alert,
   Platform,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,7 +32,7 @@ import {
 } from 'lucide-react-native';
 
 import { useDishStore } from '@/store/useDishStore';
-import { DISH_CATEGORIES, type Dish, type DishCategory } from '@/database/types';
+import { DISH_CATEGORIES, type Dish } from '@/database/types';
 import { exportDishes } from '@/utils/syncManager';
 
 export default function DishesScreen() {
@@ -47,6 +48,7 @@ export default function DishesScreen() {
   } = useDishStore();
 
   const [localSearch, setLocalSearch] = useState('');
+  const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -86,8 +88,9 @@ export default function DishesScreen() {
   // 渲染单个菜品卡片
   const renderItem = useCallback(
     ({ item }: { item: Dish }) => (
-      <View
-        className="w-full flex-row bg-white dark:bg-[#1C1C1E] rounded-[24px] overflow-hidden mb-4 border border-black/[0.04] dark:border-white/[0.06]"
+      <Pressable
+        onPress={() => setSelectedDish(item)}
+        className="w-full flex-row bg-white dark:bg-[#1C1C1E] rounded-[24px] overflow-hidden mb-4 border border-black/[0.04] dark:border-white/[0.06] active:scale-[0.98] transition-transform"
         style={{
           shadowColor: '#000000',
           shadowOffset: { width: 0, height: 4 },
@@ -154,9 +157,9 @@ export default function DishesScreen() {
             </Pressable>
           </View>
         </View>
-      </View>
+      </Pressable>
     ),
-    [handleDelete]
+    [handleDelete, handleShare]
   );
 
   return (
@@ -196,16 +199,16 @@ export default function DishesScreen() {
         {/* 分类过滤器 */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
           <Pressable
-            onPress={() => setCategory('全部')}
+            onPress={() => setCategory(null)}
             className={`px-4 py-2 rounded-full border ${
-              activeCategory === '全部'
+              activeCategory === null
                 ? 'bg-[#FF6B35] border-[#FF6B35]'
                 : 'bg-white dark:bg-[#1C1C1E] border-black/[0.04] dark:border-white/[0.06]'
             }`}
           >
             <Text
               className={`text-[13px] font-bold ${
-                activeCategory === '全部' ? 'text-white' : 'text-neutral-600 dark:text-neutral-400'
+                activeCategory === null ? 'text-white' : 'text-neutral-600 dark:text-neutral-400'
               }`}
             >
               全部
@@ -273,6 +276,84 @@ export default function DishesScreen() {
       >
         <Plus size={24} color="#FFFFFF" strokeWidth={3} />
       </Pressable>
+
+      {/* 菜品详情悬浮窗 */}
+      <Modal
+        visible={!!selectedDish}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedDish(null)}
+      >
+        <View className="flex-1 bg-black/60 justify-center items-center px-4">
+          <View className="w-full max-h-[85%] bg-[#F2F2F7] dark:bg-[#1C1C1E] rounded-[32px] overflow-hidden">
+            {/* 顶部图片 */}
+            <View className="w-full h-56 bg-neutral-200 dark:bg-neutral-800">
+              {selectedDish?.imageUri ? (
+                <Image source={{ uri: selectedDish.imageUri }} className="w-full h-full" resizeMode="cover" />
+              ) : (
+                <View className="flex-1 items-center justify-center">
+                  <BookOpen size={48} color="#C7C7CC" />
+                </View>
+              )}
+              {/* 关闭按钮 (右上角) */}
+              <Pressable
+                onPress={() => setSelectedDish(null)}
+                className="absolute top-4 right-4 w-10 h-10 bg-black/50 rounded-full items-center justify-center active:scale-95"
+              >
+                <X size={20} color="#FFFFFF" strokeWidth={2.5} />
+              </Pressable>
+            </View>
+
+            {/* 内容区 */}
+            <ScrollView className="p-6" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+              <Text className="text-[28px] font-black text-neutral-900 dark:text-white tracking-tight mb-2">
+                {selectedDish?.name}
+              </Text>
+              
+              <Text className="text-[15px] font-bold text-[#FF6B35] mb-6">
+                {selectedDish?.category}
+              </Text>
+
+              {/* 食材清单 */}
+              {selectedDish?.ingredients && selectedDish.ingredients.length > 0 && (
+                <View className="mb-6">
+                  <Text className="text-[17px] font-bold text-neutral-900 dark:text-white mb-3">食材清单</Text>
+                  {selectedDish.ingredients.map((ing, idx) => (
+                    <View key={idx} className="flex-row justify-between mb-2 pb-2 border-b border-black/5 dark:border-white/5">
+                      <Text className="text-[15px] text-neutral-700 dark:text-neutral-300 font-medium">{ing.name}</Text>
+                      <Text className="text-[15px] text-neutral-500 dark:text-neutral-400">{ing.amount}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* 烹饪步骤 */}
+              {selectedDish?.steps ? (
+                <View className="mb-2">
+                  <Text className="text-[17px] font-bold text-neutral-900 dark:text-white mb-3">烹饪步骤</Text>
+                  <Text className="text-[15px] text-neutral-700 dark:text-neutral-300 leading-[24px]">
+                    {selectedDish.steps}
+                  </Text>
+                </View>
+              ) : null}
+            </ScrollView>
+
+            {/* 底部编辑按钮 */}
+            <View className="p-4 border-t border-black/[0.05] dark:border-white/[0.05] flex-row justify-end">
+              <Pressable
+                onPress={() => {
+                  const id = selectedDish?.id;
+                  setSelectedDish(null);
+                  if (id) router.push(`/edit-dish?id=${id}`);
+                }}
+                className="px-6 h-[44px] bg-neutral-900 dark:bg-white rounded-[14px] items-center justify-center flex-row active:scale-[0.98]"
+              >
+                <Text className="text-[17px] font-bold text-white dark:text-neutral-900">编辑菜谱</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
