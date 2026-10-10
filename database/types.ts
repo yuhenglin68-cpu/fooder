@@ -13,6 +13,8 @@ export type DishCategory =
   | '饮品'
   | '其他';
 
+export type MealType = '早餐' | '饮品' | '肉类' | '素类' | '汤类' | '其它';
+
 /** 所有可用分类常量 */
 export const DISH_CATEGORIES: DishCategory[] = [
   '主食',
@@ -79,6 +81,31 @@ export interface UpdateDishInput {
   steps?: string;
 }
 
+/** 每日菜品日志行 */
+export interface DailyLogRow {
+  id: string;
+  date_string: string;
+  dish_id: string;
+  meal_type: string;
+  created_at: number;
+}
+
+/** 应用层每日菜品日志 */
+export interface DailyLog {
+  id: string;
+  dateString: string;
+  dishId: string;
+  mealType: string; // MealType 强转
+  createdAt: number;
+  dish?: Dish; // 级联查询的菜品详情
+}
+
+export interface CreateDailyLogInput {
+  dateString: string;
+  dishId: string;
+  mealType: string;
+}
+
 // ─── 行 ↔ 应用对象转换工具 ────────────────────────────────
 
 /** 将数据库行转换为应用层对象 */
@@ -100,5 +127,17 @@ export function rowToDish(row: DishRow): Dish {
     ingredients: parsedIngredients,
     steps: row.steps || '',
     createdAt: row.created_at,
+  };
+}
+
+/** 将数据库行转换为应用层日志对象 */
+export function rowToDailyLog(row: DailyLogRow, dish?: Dish): DailyLog {
+  return {
+    id: row.id,
+    dateString: row.date_string,
+    dishId: row.dish_id,
+    mealType: row.meal_type,
+    createdAt: row.created_at,
+    dish,
   };
 }

@@ -75,6 +75,11 @@ export interface DishState {
   pickRandom: (count?: number) => Dish[];
 
   /**
+   * 按餐点类型随机抽取菜品
+   */
+  pickRandomByMealType: (mealType: string, count?: number) => Dish[];
+
+  /**
    * 刷新菜品总数
    */
   refreshCount: () => void;
@@ -168,6 +173,12 @@ export const useDishStore = create<DishState>((set, get) => ({
 
   pickRandom: (count: number = 1) => {
     return getRandomDishes(count);
+  },
+
+  pickRandomByMealType: (mealType: string, count: number = 1) => {
+    // We import getRandomDishesByMealType at the top, or just use require
+    const { getRandomDishesByMealType } = require('@/database');
+    return getRandomDishesByMealType(mealType, count);
   },
 
   refreshCount: () => {

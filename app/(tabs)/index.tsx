@@ -1,35 +1,32 @@
-/**
- * 「今天吃啥」—— 随机抽签 / 灵感决策页
- *
- * Apple HIG 极简大字设计原则：
- * 1. 顶部留白：结合 insets.top 提供沉浸式呼吸感
- * 2. 圆角与比例：卡片 rounded-[32px] 创造柔软亲和的点击边界
- * 3. 字体层次：超大加粗标题 (font-extrabold)，次级说明文弱化
- */
-
 import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
   Pressable,
-  Animated,
   ScrollView,
   Image,
+  Modal,
+  Alert,
 } from 'react-native';
-import { router, useFocusEffect, Tabs } from 'expo-router';
-import { Dices, RefreshCw, Plus } from 'lucide-react-native';
+import { Tabs, router, useFocusEffect } from 'expo-router';
+import { X, CalendarPlus } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useDishStore } from '@/store/useDishStore';
-import type { Dish } from '@/database/types';
+import { useLogStore } from '@/store/useLogStore';
+import type { Dish, MealType } from '@/database/types';
+import { useColorScheme } from '@/components/useColorScheme';
+
+const MEAL_TYPES: MealType[] = ['早餐', '饮品', '肉类', '素类', '汤类', '其它'];
 
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
-  const { pickRandom, totalCount, refreshCount } = useDishStore();
 
-  const [pickedDish, setPickedDish] = useState<Dish | null>(null);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const spinValue = useState(new Animated.Value(0))[0];
+  const { pickRandomByMealType, totalCount, refreshCount } = useDishStore();
+  const { addLog } = useLogStore();
+
+  const [drawnDishes, setDrawnDishes] = useState<Record<string, Dish>>({});
+  const [selectedItem, setSelectedItem] = useState<{ dish: Dish; mealType: string } | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -37,134 +34,201 @@ export default function TodayScreen() {
     }, [refreshCount])
   );
 
-  const handleAction = useCallback(() => {
+  const handleDraw = (mealType: MealType) => {
     if (totalCount === 0) {
       router.push('/add-dish');
       return;
     }
+    const dishes = pickRandomByMealType(mealType, 1);
+    if (dishes.length > 0) {
+      setDrawnDishes((prev) => ({ ...prev, [mealType]: dishes[0] }));
+    } else {
+      Alert.alert('提示', '菜谱库中没有任何菜品');
+    }
+  };
 
-    setIsSpinning(true);
-    spinValue.setValue(0);
-    Animated.timing(spinValue, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start(() => {
-      const [dish] = pickRandom(1);
-      setPickedDish(dish ?? null);
-      setIsSpinning(false);
+  const handleAddToToday = () => {
+    if (!selectedItem) return;
+    
+    // get current date string as YYYY-MM-DD
+    const date = new Date();
+    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    
+    addLog({
+      dateString,
+      dishId: selectedItem.dish.id,
+      mealType: selectedItem.mealType,
     });
-  }, [totalCount, pickRandom, spinValue]);
-
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '1080deg'],
-  });
+    
+    setSelectedItem(null);
+    Alert.alert('已添加', `【${selectedItem.dish.name}】已成功加入今日菜单！`);
+  };
 
   return (
-    <ScrollView
-      className="flex-1 bg-[#F2F2F7] dark:bg-[#000000]"
-      contentContainerStyle={{
-        flexGrow: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 24,
-        paddingTop: insets.top,
-        paddingBottom: 120, // 避开底部 BlurView
-      }}
-      showsVerticalScrollIndicator={false}
-      bounces={false}
-    >
+    <View className="flex-1 bg-[#F2F2F7] dark:bg-[#000000]">
       <Tabs.Screen options={{ headerTitle: 'Fooder', tabBarLabel: '抽签' }} />
-
-      {/* 顶部指示区 */}
-      <View className="items-center mb-8 mt-10">
-        <View className="w-24 h-24 rounded-[32px] items-center justify-center mb-4 overflow-hidden border border-black/[0.05] dark:border-white/[0.1]">
-          <Image source={require('@/assets/images/icon.jpg')} className="w-full h-full" resizeMode="cover" />
+      
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingTop: insets.top + 20,
+          paddingBottom: 120,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 顶部标题区 */}
+        <View className="mb-6">
+          <Text className="text-[34px] font-extrabold text-neutral-900 dark:text-white tracking-tight">
+            今天吃什么
+          </Text>
+          <Text className="text-[15px] font-medium text-neutral-500 dark:text-neutral-400 mt-2">
+            点击任意区域抽取你的专属灵感
+          </Text>
         </View>
-        <Text className="text-[34px] font-extrabold text-neutral-900 dark:text-white tracking-tight">
-          今天吃什么
-        </Text>
-        <Text className="text-[15px] font-medium text-neutral-500 dark:text-neutral-400 mt-2">
-          {totalCount > 0 ? `菜谱库共收录 ${totalCount} 道好菜` : '菜谱库暂无菜品'}
-        </Text>
-      </View>
 
-      {/* 核心抽签结果卡片 */}
-      <View
-        className="w-full min-h-[220px] rounded-[32px] p-8 bg-white dark:bg-[#1C1C1E] border border-black/[0.04] dark:border-white/[0.06] items-center justify-center mb-8"
-        style={{
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.04,
-          shadowRadius: 24,
-          elevation: 2,
-        }}
-      >
-        {pickedDish ? (
-          <View className="items-center">
-            <View className="bg-orange-50 dark:bg-[#2C1A14] px-3.5 py-1.5 rounded-full mb-3">
-              <Text className="text-[13px] font-bold text-[#FF6B35]">
-                {pickedDish.category}
-              </Text>
-            </View>
-            <Text className="text-[32px] font-black text-neutral-900 dark:text-white text-center tracking-tight mb-3">
-              {pickedDish.name}
-            </Text>
-            {pickedDish.tags.length > 0 && (
-              <View className="flex-row flex-wrap justify-center gap-2 mt-2">
-                {pickedDish.tags.map((tag, i) => (
-                  <View
-                    key={i}
-                    className="bg-[#F2F2F7] dark:bg-[#2C2C2E] px-3 py-1 rounded-lg"
-                  >
-                    <Text className="text-[13px] font-medium text-neutral-600 dark:text-neutral-300">
-                      {tag}
+        {/* 6个独立抽签区域：2列3行 */}
+        <View className="flex-row flex-wrap justify-between">
+          {MEAL_TYPES.map((meal) => {
+            const dish = drawnDishes[meal];
+            return (
+              <Pressable
+                key={meal}
+                onPress={() => {
+                  if (dish) {
+                    setSelectedItem({ dish, mealType: meal });
+                  } else {
+                    handleDraw(meal);
+                  }
+                }}
+                className="w-[48%] h-36 rounded-[24px] mb-4 overflow-hidden bg-white dark:bg-[#1C1C1E] border border-black/[0.04] dark:border-white/[0.06] justify-center items-center active:scale-[0.98]"
+                style={{
+                  shadowColor: '#000000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 12,
+                  elevation: 2,
+                }}
+              >
+                {dish ? (
+                  <>
+                    {dish.imageUri ? (
+                      <Image source={{ uri: dish.imageUri }} className="absolute w-full h-full" resizeMode="cover" />
+                    ) : (
+                      <View className="absolute w-full h-full bg-neutral-200 dark:bg-neutral-800" />
+                    )}
+                    {/* 半透明遮罩让文字更清晰 */}
+                    <View className="absolute w-full h-full bg-black/40" />
+                    <View className="px-3">
+                      <Text className="text-white font-extrabold text-[20px] text-center" numberOfLines={2}>
+                        {dish.name}
+                      </Text>
+                      <Text className="text-white/80 text-[12px] text-center mt-1 font-bold">
+                        {meal}
+                      </Text>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <Text className="text-[20px] font-extrabold text-neutral-900 dark:text-white">
+                      {meal}
                     </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-        ) : (
-          <View className="items-center opacity-60">
-            <Dices size={48} color="#8E8E93" strokeWidth={1.2} />
-            <Text className="text-[15px] font-medium text-neutral-500 mt-4 text-center">
-              {totalCount > 0 ? '点击下方按钮\n抽取今日灵感' : '快去添加你的第一道拿手菜吧'}
-            </Text>
-          </View>
-        )}
-      </View>
+                    <Text className="text-[13px] text-neutral-400 dark:text-neutral-500 mt-1">
+                      点击抽签
+                    </Text>
+                  </>
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+      </ScrollView>
 
-      {/* 功能性主按钮 */}
-      <Pressable
-        onPress={handleAction}
-        disabled={isSpinning}
-        className="w-full h-16 rounded-[22px] bg-[#FF6B35] flex-row items-center justify-center active:scale-[0.98]"
-        style={{
-          shadowColor: '#FF6B35',
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.3,
-          shadowRadius: 16,
-          elevation: 4,
-        }}
+      {/* 菜品详情悬浮卡片 Modal */}
+      <Modal
+        visible={!!selectedItem}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedItem(null)}
       >
-        {totalCount === 0 ? (
-          <>
-            <Plus size={20} color="#FFFFFF" strokeWidth={2.5} />
-            <Text className="text-white font-bold text-[17px] ml-2">去添加菜品</Text>
-          </>
-        ) : (
-          <>
-            <Animated.View style={{ transform: [{ rotate: spin }] }}>
-              <RefreshCw size={20} color="#FFFFFF" strokeWidth={2.2} />
-            </Animated.View>
-            <Text className="text-white font-bold text-[17px] ml-2.5">
-              {isSpinning ? '抽取中...' : pickedDish ? '换一个' : '开始抽签'}
-            </Text>
-          </>
-        )}
-      </Pressable>
-    </ScrollView>
+        <View className="flex-1 bg-black/40 justify-center items-center px-5">
+          <View className="w-full bg-[#F2F2F7] dark:bg-[#000000] rounded-[32px] overflow-hidden max-h-[85%] border border-white/10">
+            {/* 卡片顶部图片 */}
+            <View className="w-full h-56 relative bg-neutral-200 dark:bg-neutral-800">
+              {selectedItem?.dish.imageUri && (
+                <Image
+                  source={{ uri: selectedItem.dish.imageUri }}
+                  className="w-full h-full"
+                  resizeMode="cover"
+                />
+              )}
+              {/* 关闭按钮 */}
+              <Pressable
+                onPress={() => setSelectedItem(null)}
+                className="absolute top-4 right-4 w-10 h-10 bg-black/50 rounded-full items-center justify-center active:scale-95 z-10"
+              >
+                <X size={20} color="#FFFFFF" strokeWidth={2.5} />
+              </Pressable>
+            </View>
+
+            {/* 内容区 */}
+            <ScrollView className="p-6" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+              <Text className="text-[28px] font-black text-neutral-900 dark:text-white tracking-tight mb-2">
+                {selectedItem?.dish.name}
+              </Text>
+              
+              <Text className="text-[15px] font-bold text-[#FF6B35] mb-6">
+                {selectedItem?.dish.category} · {selectedItem?.mealType}
+              </Text>
+
+              {/* 食材清单 */}
+              {selectedItem?.dish.ingredients && selectedItem.dish.ingredients.length > 0 && (
+                <View className="mb-6">
+                  <Text className="text-[17px] font-bold text-neutral-900 dark:text-white mb-3">食材清单</Text>
+                  {selectedItem.dish.ingredients.map((ing, idx) => (
+                    <View key={idx} className="flex-row justify-between mb-2 pb-2 border-b border-black/5 dark:border-white/5">
+                      <Text className="text-[15px] text-neutral-700 dark:text-neutral-300 font-medium">{ing.name}</Text>
+                      <Text className="text-[15px] text-neutral-500 dark:text-neutral-400">{ing.amount}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* 烹饪步骤 */}
+              {selectedItem?.dish.steps ? (
+                <View className="mb-2">
+                  <Text className="text-[17px] font-bold text-neutral-900 dark:text-white mb-3">烹饪步骤</Text>
+                  <Text className="text-[15px] text-neutral-700 dark:text-neutral-300 leading-[24px]">
+                    {selectedItem.dish.steps}
+                  </Text>
+                </View>
+              ) : null}
+            </ScrollView>
+
+            {/* 底部功能栏 */}
+            <View className="p-4 border-t border-black/[0.05] dark:border-white/[0.05]">
+              <Pressable
+                onPress={handleAddToToday}
+                className="w-full h-[52px] bg-[#FF6B35] rounded-[16px] items-center justify-center flex-row active:scale-[0.98]"
+              >
+                <CalendarPlus size={20} color="#FFFFFF" strokeWidth={2.5} />
+                <Text className="text-[17px] font-bold text-white ml-2">添加到今日菜单</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  if (selectedItem) {
+                    handleDraw(selectedItem.mealType as MealType);
+                    setSelectedItem(null);
+                  }
+                }}
+                className="w-full h-[44px] mt-2 items-center justify-center active:opacity-70"
+              >
+                <Text className="text-[15px] font-medium text-neutral-500">重新抽取此项</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }

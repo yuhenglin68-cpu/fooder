@@ -14,6 +14,11 @@ import {
   DishRow,
   UpdateDishInput,
   rowToDish,
+  DailyLog,
+  DailyLogRow,
+  CreateDailyLogInput,
+  rowToDailyLog,
+  MealType,
 } from './types';
 
 // ─── 数据库连接单例 ─────────────────────────────────────────
@@ -54,6 +59,22 @@ function _initializeDatabase(db: SQLite.SQLiteDatabase): void {
   // 为按分类检索创建索引
   db.execSync(`
     CREATE INDEX IF NOT EXISTS idx_dishes_category ON dishes(category);
+  `);
+
+  // 创建每日菜品日志表
+  db.execSync(`
+    CREATE TABLE IF NOT EXISTS daily_logs (
+      id          TEXT PRIMARY KEY NOT NULL,
+      date_string TEXT NOT NULL,
+      dish_id     TEXT NOT NULL,
+      meal_type   TEXT NOT NULL,
+      created_at  INTEGER NOT NULL,
+      FOREIGN KEY(dish_id) REFERENCES dishes(id) ON DELETE CASCADE
+    );
+  `);
+  
+  db.execSync(`
+    CREATE INDEX IF NOT EXISTS idx_daily_logs_date ON daily_logs(date_string);
   `);
 }
 
@@ -154,6 +175,41 @@ export function getRandomDishes(count: number = 1): Dish[] {
     'SELECT * FROM dishes ORDER BY RANDOM() LIMIT ?',
     [count]
   );
+  return rows.map(rowToDish);
+}
+
+/** 按照餐点类型随机抽取菜品 */
+export function getRandomDishesByMealType(mealType: MealType, count: number = 1): Dish[] {
+  const db = getDatabase();
+  let where = '';
+  
+  if (mealType === '早餐') {
+    where = "WHERE category IN ('主食', '小吃', '甜点')";
+  } else if (mealType === '饮品') {
+    where = "WHERE category = '饮品'";
+  } else if (mealType === '汤类') {
+    where = "WHERE category = '汤羹'";
+  } else if (mealType === '肉类') {
+    where = "WHERE category = '热炒'";
+  } else if (mealType === '素类') {
+    where = "WHERE category = '凉菜'";
+  } else {
+    where = "WHERE category = '其他'";
+  }
+
+  let rows = db.getAllSync<DishRow>(
+    `SELECT * FROM dishes ${where} ORDER BY RANDOM() LIMIT ?`,
+    [count]
+  );
+  
+  // 如果分类下没有菜，兜底全局随机
+  if (rows.length === 0) {
+    rows = db.getAllSync<DishRow>(
+      'SELECT * FROM dishes ORDER BY RANDOM() LIMIT ?',
+      [count]
+    );
+  }
+  
   return rows.map(rowToDish);
 }
 
@@ -289,6 +345,57 @@ export function upsertDishes(dishes: Dish[]): void {
       }
     }
   });
+}
+
+// ─── 每日日志 (Daily Logs) CRUD ────────────────────────────
+
+export function getDailyLogsByDate(dateString: string): DailyLog[] {
+  const db = getDatabase();
+  const logs = db.getAllSync<DailyLogRow>(
+    `SELECT * FROM daily_logs WHERE date_string = ? ORDER BY created_at ASC`,
+    [dateString]
+  );
+  return logs.map((row) => {
+    const dish = getDishById(row.dish_id);
+    return rowToDailyLog(row, dish ?? undefined);
+  });
+}
+
+export function getAllDailyLogs(): DailyLog[] {
+  const db = getDatabase();
+  const logs = db.getAllSync<DailyLogRow>(
+    `SELECT * FROM daily_logs ORDER BY date_string DESC, created_at ASC`
+  );
+  return logs.map((row) => {
+    const dish = getDishById(row.dish_id);
+    return rowToDailyLog(row, dish ?? undefined);
+  });
+}
+
+export function insertDailyLog(input: CreateDailyLogInput): DailyLog {
+  const db = getDatabase();
+  const id = generateId();
+  const createdAt = Date.now();
+
+  db.runSync(
+    `INSERT INTO daily_logs (id, date_string, dish_id, meal_type, created_at) VALUES (?, ?, ?, ?, ?)`,
+    [id, input.dateString, input.dishId, input.mealType, createdAt]
+  );
+
+  const row = db.getFirstSync<DailyLogRow>(
+    `SELECT * FROM daily_logs WHERE id = ?`,
+    [id]
+  );
+  
+  if (!row) throw new Error('Insert daily log failed.');
+  const dish = getDishById(row.dish_id);
+  return rowToDailyLog(row, dish ?? undefined);
+}
+
+export function deleteDailyLog(id: string): boolean {
+  const db = getDatabase();
+  const result = db.runSync(`DELETE FROM daily_logs WHERE id = ?`, [id]);
+  return result.changes > 0;
 }
 
 /**

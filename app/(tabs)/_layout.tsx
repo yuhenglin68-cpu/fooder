@@ -9,7 +9,7 @@
  */
 
 import { Tabs } from 'expo-router';
-import { BookOpen, Dices, Settings } from 'lucide-react-native';
+import { BookOpen, Dices, Settings, Calendar } from 'lucide-react-native';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -85,6 +85,15 @@ export default function TabLayout() {
           title: '菜谱库',
           tabBarIcon: ({ color, size }) => (
             <BookOpen size={size} color={color} strokeWidth={1.8} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="logs"
+        options={{
+          title: '菜品日志',
+          tabBarIcon: ({ color, size }) => (
+            <Calendar size={size} color={color} strokeWidth={1.8} />
           ),
         }}
       />
