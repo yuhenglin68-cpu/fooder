@@ -53,7 +53,7 @@ export default function EditDishScreen() {
   const { dishes, updateDish } = useDishStore();
 
   const [name, setName] = useState('');
-  const [category, setCategory] = useState<DishCategory>('热炒');
+  const [category, setCategory] = useState<DishCategory>('其它');
   const [price, setPrice] = useState('');
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);

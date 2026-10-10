@@ -47,7 +47,7 @@ function _initializeDatabase(db: SQLite.SQLiteDatabase): void {
       id          TEXT PRIMARY KEY NOT NULL,
       name        TEXT NOT NULL,
       image_uri   TEXT,
-      category    TEXT NOT NULL DEFAULT '其他',
+      category    TEXT NOT NULL DEFAULT '其它',
       tags        TEXT NOT NULL DEFAULT '',
       price       REAL,
       ingredients TEXT NOT NULL DEFAULT '[]',
@@ -59,6 +59,15 @@ function _initializeDatabase(db: SQLite.SQLiteDatabase): void {
   // 为按分类检索创建索引
   db.execSync(`
     CREATE INDEX IF NOT EXISTS idx_dishes_category ON dishes(category);
+  `);
+
+  // 迁移老数据分类到 6 大新分类
+  db.execSync(`
+    UPDATE dishes SET category = '早餐' WHERE category = '主食';
+    UPDATE dishes SET category = '肉类' WHERE category = '热炒';
+    UPDATE dishes SET category = '汤类' WHERE category = '汤羹';
+    UPDATE dishes SET category = '素类' WHERE category = '凉菜';
+    UPDATE dishes SET category = '其它' WHERE category IN ('甜点', '小吃', '其他');
   `);
 
   // 创建每日菜品日志表
@@ -181,25 +190,10 @@ export function getRandomDishes(count: number = 1): Dish[] {
 /** 按照餐点类型随机抽取菜品 */
 export function getRandomDishesByMealType(mealType: MealType, count: number = 1): Dish[] {
   const db = getDatabase();
-  let where = '';
-  
-  if (mealType === '早餐') {
-    where = "WHERE category IN ('主食', '小吃', '甜点')";
-  } else if (mealType === '饮品') {
-    where = "WHERE category = '饮品'";
-  } else if (mealType === '汤类') {
-    where = "WHERE category = '汤羹'";
-  } else if (mealType === '肉类') {
-    where = "WHERE category = '热炒'";
-  } else if (mealType === '素类') {
-    where = "WHERE category = '凉菜'";
-  } else {
-    where = "WHERE category = '其他'";
-  }
 
   let rows = db.getAllSync<DishRow>(
-    `SELECT * FROM dishes ${where} ORDER BY RANDOM() LIMIT ?`,
-    [count]
+    `SELECT * FROM dishes WHERE category = ? ORDER BY RANDOM() LIMIT ?`,
+    [mealType, count]
   );
   
   // 如果分类下没有菜，兜底全局随机

@@ -4,27 +4,23 @@
 
 /** 菜品分类枚举 */
 export type DishCategory =
-  | '主食'
-  | '热炒'
-  | '汤羹'
-  | '凉菜'
-  | '甜点'
-  | '小吃'
+  | '早餐'
   | '饮品'
-  | '其他';
+  | '肉类'
+  | '素类'
+  | '汤类'
+  | '其它';
 
-export type MealType = '早餐' | '饮品' | '肉类' | '素类' | '汤类' | '其它';
+export type MealType = DishCategory;
 
 /** 所有可用分类常量 */
 export const DISH_CATEGORIES: DishCategory[] = [
-  '主食',
-  '热炒',
-  '汤羹',
-  '凉菜',
-  '甜点',
-  '小吃',
+  '早餐',
   '饮品',
-  '其他',
+  '肉类',
+  '素类',
+  '汤类',
+  '其它',
 ];
 
 /** 单条食材 */
