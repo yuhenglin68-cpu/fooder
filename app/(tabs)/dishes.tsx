@@ -27,10 +27,12 @@ import {
   Trash2,
   BookOpen,
   Plus,
+  Share,
 } from 'lucide-react-native';
 
 import { useDishStore } from '@/store/useDishStore';
 import { DISH_CATEGORIES, type Dish, type DishCategory } from '@/database/types';
+import { exportDishes } from '@/utils/syncManager';
 
 export default function DishesScreen() {
   const insets = useSafeAreaInsets();
@@ -72,6 +74,13 @@ export default function DishesScreen() {
       ]);
     },
     [removeDish]
+  );
+
+  const handleShare = useCallback(
+    (dish: Dish) => {
+      exportDishes([dish]);
+    },
+    []
   );
 
   // 渲染单个菜品卡片
@@ -128,7 +137,14 @@ export default function DishesScreen() {
           </View>
 
           {/* 底部操作区 */}
-          <View className="flex-row justify-end mt-2">
+          <View className="flex-row justify-end mt-2 gap-2">
+            <Pressable
+              onPress={() => handleShare(item)}
+              className="w-8 h-8 items-center justify-center rounded-full active:bg-neutral-100 dark:active:bg-neutral-800"
+              hitSlop={8}
+            >
+              <Share size={16} color="#007AFF" strokeWidth={2} />
+            </Pressable>
             <Pressable
               onPress={() => handleDelete(item)}
               className="w-8 h-8 items-center justify-center rounded-full active:bg-neutral-100 dark:active:bg-neutral-800"

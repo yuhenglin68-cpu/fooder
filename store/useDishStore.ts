@@ -20,6 +20,7 @@ import {
   searchDishes,
   getRandomDishes,
   getDishCount,
+  upsertDishes,
 } from '@/database';
 import { deleteImageFromSandbox } from '@/utils/fileManager';
 
@@ -82,6 +83,11 @@ export interface DishState {
    * 切换当前分类
    */
   setCategory: (category: DishCategory | null) => void;
+
+  /**
+   * 导入并合并菜品
+   */
+  importAndMergeDishes: (importedDishes: Dish[]) => void;
 }
 
 export const useDishStore = create<DishState>((set, get) => ({
@@ -170,5 +176,16 @@ export const useDishStore = create<DishState>((set, get) => ({
 
   setCategory: (category: DishCategory | null) => {
     get().loadDishes(category);
+  },
+
+  importAndMergeDishes: (importedDishes: Dish[]) => {
+    try {
+      upsertDishes(importedDishes);
+      get().loadDishes();
+      get().refreshCount();
+    } catch (e) {
+      console.error('[Store] 导入合并失败:', e);
+      throw e;
+    }
   },
 }));

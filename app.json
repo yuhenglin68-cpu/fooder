@@ -16,17 +16,27 @@
           {
             "CFBundleTypeName": "fooder 数据包",
             "LSHandlerRank": "Owner",
-            "CFBundleTypeExtensions": ["fooder"],
-            "LSItemContentTypes": ["com.fooder.datapackage"]
+            "CFBundleTypeExtensions": [
+              "fooder",
+              "guorizi"
+            ],
+            "LSItemContentTypes": [
+              "com.fooder.datapackage"
+            ]
           }
         ],
         "UTExportedTypeDeclarations": [
           {
             "UTTypeIdentifier": "com.fooder.datapackage",
             "UTTypeDescription": "fooder 数据包",
-            "UTTypeConformsTo": ["public.data"],
+            "UTTypeConformsTo": [
+              "public.data"
+            ],
             "UTTypeTagSpecification": {
-              "public.filename-extension": ["fooder"]
+              "public.filename-extension": [
+                "fooder",
+                "guorizi"
+              ]
             }
           }
         ]
@@ -37,6 +47,41 @@
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "mimeType": "*/*",
+              "host": "*",
+              "scheme": "file",
+              "pathPattern": ".*\\.fooder"
+            },
+            {
+              "mimeType": "*/*",
+              "host": "*",
+              "scheme": "content",
+              "pathPattern": ".*\\.fooder"
+            },
+            {
+              "mimeType": "*/*",
+              "host": "*",
+              "scheme": "file",
+              "pathPattern": ".*\\.guorizi"
+            },
+            {
+              "mimeType": "*/*",
+              "host": "*",
+              "scheme": "content",
+              "pathPattern": ".*\\.guorizi"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
       ],
       "predictiveBackGestureEnabled": false
     },
@@ -69,7 +114,8 @@
           "behavior": "inset-swipe"
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true

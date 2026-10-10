@@ -229,3 +229,64 @@ export function deleteAllDishes(): number {
   const result = db.runSync('DELETE FROM dishes');
   return result.changes;
 }
+
+/** 批量导入并合并菜品（如果存在同名或同 ID，则覆盖更新） */
+export function upsertDishes(dishes: Dish[]): void {
+  const db = getDatabase();
+  
+  db.withTransactionSync(() => {
+    for (const dish of dishes) {
+      const existing = db.getFirstSync<DishRow>(
+        'SELECT * FROM dishes WHERE id = ? OR name = ?',
+        [dish.id || '', dish.name]
+      );
+
+      const id = existing ? existing.id : (dish.id || generateId());
+      const createdAt = existing ? existing.created_at : Date.now();
+
+      const row: DishRow = {
+        id,
+        name: dish.name,
+        image_uri: dish.imageUri ?? null,
+        category: dish.category,
+        tags: (dish.tags ?? []).join(','),
+        price: dish.price ?? null,
+        ingredients: JSON.stringify(dish.ingredients ?? []),
+        steps: dish.steps ?? '',
+        created_at: createdAt,
+      };
+
+      if (existing) {
+        db.runSync(
+          `UPDATE dishes SET name = ?, image_uri = ?, category = ?, tags = ?, price = ?, ingredients = ?, steps = ? WHERE id = ?`,
+          [
+            row.name,
+            row.image_uri,
+            row.category,
+            row.tags,
+            row.price,
+            row.ingredients,
+            row.steps,
+            row.id,
+          ]
+        );
+      } else {
+        db.runSync(
+          `INSERT INTO dishes (id, name, image_uri, category, tags, price, ingredients, steps, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            row.id,
+            row.name,
+            row.image_uri,
+            row.category,
+            row.tags,
+            row.price,
+            row.ingredients,
+            row.steps,
+            row.created_at,
+          ]
+        );
+      }
+    }
+  });
+}

@@ -23,19 +23,25 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { clearDatabase } from '@/database';
 import { useDishStore } from '@/store/useDishStore';
 
+import { exportDishes, pickAndImportDishes } from '@/utils/syncManager';
+
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   
-  const { loadDishes } = useDishStore();
+  const { loadDishes, dishes } = useDishStore();
 
-  const handleExport = () => {
-    Alert.alert('即将推出', '导出数据包功能正在开发中，可以通过微信或文件分享给家人！');
+  const handleExport = async () => {
+    if (dishes.length === 0) {
+      Alert.alert('提示', '当前菜谱库为空，没有可以导出的数据。');
+      return;
+    }
+    await exportDishes(dishes);
   };
 
-  const handleImport = () => {
-    Alert.alert('即将推出', '导入数据功能正在开发中，敬请期待！');
+  const handleImport = async () => {
+    await pickAndImportDishes();
   };
 
   const handleClearAll = () => {
@@ -115,13 +121,13 @@ export default function SettingsScreen() {
         </Text>
         <View className="rounded-[22px] overflow-hidden border border-black/[0.02] dark:border-white/[0.04]">
           <SettingsItem 
-            title="导出数据 (.fooder)" 
+            title="一键导出全库" 
             icon={<UploadCloud size={16} color="#FFF" />} 
             iconBg="bg-blue-500" 
             onPress={handleExport} 
           />
           <SettingsItem 
-            title="导入数据" 
+            title="手动导入菜谱包 (Expo测试用)" 
             icon={<DownloadCloud size={16} color="#FFF" />} 
             iconBg="bg-green-500" 
             onPress={handleImport} 

@@ -14,8 +14,9 @@ import {
   Pressable,
   Animated,
   ScrollView,
+  Image,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, Tabs } from 'expo-router';
 import { Dices, ChefHat, RefreshCw, Plus } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -74,10 +75,12 @@ export default function TodayScreen() {
       showsVerticalScrollIndicator={false}
       bounces={false}
     >
+      <Tabs.Screen options={{ headerTitle: 'Fooder', tabBarLabel: '抽签' }} />
+
       {/* 顶部指示区 */}
       <View className="items-center mb-8 mt-10">
-        <View className="w-24 h-24 rounded-full bg-orange-100 dark:bg-[#2C1A14] items-center justify-center mb-4">
-          <ChefHat size={48} color="#FF6B35" strokeWidth={1.5} />
+        <View className="w-24 h-24 rounded-[32px] items-center justify-center mb-4 overflow-hidden border border-black/[0.05] dark:border-white/[0.1]">
+          <Image source={require('@/assets/images/icon.jpg')} className="w-full h-full" resizeMode="cover" />
         </View>
         <Text className="text-[34px] font-extrabold text-neutral-900 dark:text-white tracking-tight">
           今天吃什么
