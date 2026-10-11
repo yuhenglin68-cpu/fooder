@@ -29,9 +29,11 @@ import {
   BookOpen,
   Plus,
   Share,
+  CalendarPlus,
 } from 'lucide-react-native';
 
 import { useDishStore } from '@/store/useDishStore';
+import { useLogStore } from '@/store/useLogStore';
 import { DISH_CATEGORIES, type Dish } from '@/database/types';
 import { exportDishes } from '@/utils/syncManager';
 import { GlobalBackground } from '@/components/GlobalBackground';
@@ -47,6 +49,7 @@ export default function DishesScreen() {
     search,
     setCategory,
   } = useDishStore();
+  const { addLog } = useLogStore();
 
   const [localSearch, setLocalSearch] = useState('');
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
@@ -84,6 +87,27 @@ export default function DishesScreen() {
       exportDishes([dish]);
     },
     []
+  );
+
+  const handleAddToMenu = useCallback(
+    (dish: Dish, isTomorrow: boolean) => {
+      const targetDate = new Date();
+      if (isTomorrow) {
+        targetDate.setDate(targetDate.getDate() + 1);
+      }
+      const dateString = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+
+      addLog({
+        dateString,
+        dishId: dish.id,
+        mealType: dish.category || '其它',
+      });
+
+      setSelectedDish(null);
+      const targetName = isTomorrow ? '明日' : '今日';
+      Alert.alert('已添加', `【${dish.name}】已成功加入${targetName}菜单！`);
+    },
+    [addLog]
   );
 
   // 渲染单个菜品卡片
@@ -340,17 +364,39 @@ export default function DishesScreen() {
               ) : null}
             </ScrollView>
 
-            {/* 底部编辑按钮 */}
-            <View className="p-4 border-t border-black/[0.05] dark:border-white/[0.05] flex-row justify-end">
+            {/* 底部操作栏：左边为「添加到今日菜单」与「添加到明日菜单」，右边为「编辑菜谱」 */}
+            <View className="p-4 border-t border-black/[0.05] dark:border-white/[0.05] flex-row items-center gap-2">
+              <Pressable
+                onPress={() => selectedDish && handleAddToMenu(selectedDish, false)}
+                className="flex-1 h-[44px] bg-[#FF6B35] rounded-[14px] items-center justify-center flex-row active:scale-[0.98] px-1"
+              >
+                <CalendarPlus size={15} color="#FFFFFF" strokeWidth={2.5} />
+                <Text numberOfLines={1} adjustsFontSizeToFit className="text-[12px] sm:text-[13px] font-bold text-white ml-1">
+                  添加到今日菜单
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => selectedDish && handleAddToMenu(selectedDish, true)}
+                className="flex-1 h-[44px] bg-[#FF8542] rounded-[14px] items-center justify-center flex-row active:scale-[0.98] px-1"
+              >
+                <CalendarPlus size={15} color="#FFFFFF" strokeWidth={2.5} />
+                <Text numberOfLines={1} adjustsFontSizeToFit className="text-[12px] sm:text-[13px] font-bold text-white ml-1">
+                  添加到明日菜单
+                </Text>
+              </Pressable>
+
               <Pressable
                 onPress={() => {
                   const id = selectedDish?.id;
                   setSelectedDish(null);
                   if (id) router.push(`/edit-dish?id=${id}`);
                 }}
-                className="px-6 h-[44px] bg-neutral-900 dark:bg-white rounded-[14px] items-center justify-center flex-row active:scale-[0.98]"
+                className="px-3.5 h-[44px] bg-neutral-900 dark:bg-white rounded-[14px] items-center justify-center flex-row active:scale-[0.98]"
               >
-                <Text className="text-[17px] font-bold text-white dark:text-neutral-900">编辑菜谱</Text>
+                <Text numberOfLines={1} className="text-[13px] font-bold text-white dark:text-neutral-900">
+                  编辑菜谱
+                </Text>
               </Pressable>
             </View>
           </View>

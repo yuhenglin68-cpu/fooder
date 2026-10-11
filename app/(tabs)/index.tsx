@@ -47,12 +47,14 @@ export default function TodayScreen() {
     }
   };
 
-  const handleAddToToday = () => {
+  const handleAddToMenu = (isTomorrow: boolean) => {
     if (!selectedItem) return;
     
-    // get current date string as YYYY-MM-DD
-    const date = new Date();
-    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const targetDate = new Date();
+    if (isTomorrow) {
+      targetDate.setDate(targetDate.getDate() + 1);
+    }
+    const dateString = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
     
     addLog({
       dateString,
@@ -60,8 +62,9 @@ export default function TodayScreen() {
       mealType: selectedItem.mealType,
     });
     
+    const targetName = isTomorrow ? '明日' : '今日';
     setSelectedItem(null);
-    Alert.alert('已添加', `【${selectedItem.dish.name}】已成功加入今日菜单！`);
+    Alert.alert('已添加', `【${selectedItem.dish.name}】已成功加入${targetName}菜单！`);
   };
 
   return (
@@ -208,13 +211,27 @@ export default function TodayScreen() {
 
             {/* 底部功能栏 */}
             <View className="p-4 border-t border-black/[0.05] dark:border-white/[0.05]">
-              <Pressable
-                onPress={handleAddToToday}
-                className="w-full h-[52px] bg-[#FF6B35] rounded-[16px] items-center justify-center flex-row active:scale-[0.98]"
-              >
-                <CalendarPlus size={20} color="#FFFFFF" strokeWidth={2.5} />
-                <Text className="text-[17px] font-bold text-white ml-2">添加到今日菜单</Text>
-              </Pressable>
+              <View className="flex-row items-center gap-2.5">
+                <Pressable
+                  onPress={() => handleAddToMenu(false)}
+                  className="flex-1 h-[52px] bg-[#FF6B35] rounded-[16px] items-center justify-center flex-row active:scale-[0.98] px-2"
+                >
+                  <CalendarPlus size={18} color="#FFFFFF" strokeWidth={2.5} />
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[15px] font-bold text-white ml-1.5">
+                    添加到今日菜单
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => handleAddToMenu(true)}
+                  className="flex-1 h-[52px] bg-[#FF8542] rounded-[16px] items-center justify-center flex-row active:scale-[0.98] px-2"
+                >
+                  <CalendarPlus size={18} color="#FFFFFF" strokeWidth={2.5} />
+                  <Text numberOfLines={1} adjustsFontSizeToFit className="text-[15px] font-bold text-white ml-1.5">
+                    添加到明日菜单
+                  </Text>
+                </Pressable>
+              </View>
               <Pressable
                 onPress={() => {
                   if (selectedItem) {
