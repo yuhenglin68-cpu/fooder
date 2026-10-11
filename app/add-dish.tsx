@@ -36,6 +36,7 @@ import {
 import { useDishStore } from '@/store/useDishStore';
 import { useColorScheme } from '@/components/useColorScheme';
 import { saveImageToSandbox } from '@/utils/fileManager';
+import { GlobalBackground } from '@/components/GlobalBackground';
 import {
   DISH_CATEGORIES,
   type DishCategory,
@@ -198,6 +199,7 @@ export default function AddDishScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1 bg-[#F2F2F7] dark:bg-[#000000]"
     >
+      <GlobalBackground />
       <ScrollView
         className="flex-1"
         contentContainerStyle={{

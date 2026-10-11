@@ -34,6 +34,7 @@ import {
 import { useDishStore } from '@/store/useDishStore';
 import { DISH_CATEGORIES, type Dish } from '@/database/types';
 import { exportDishes } from '@/utils/syncManager';
+import { GlobalBackground } from '@/components/GlobalBackground';
 
 export default function DishesScreen() {
   const insets = useSafeAreaInsets();
@@ -164,6 +165,7 @@ export default function DishesScreen() {
 
   return (
     <View className="flex-1 bg-[#F2F2F7] dark:bg-[#000000]">
+      <GlobalBackground />
       {/* 沉浸式顶部区域 (Header) */}
       <View
         style={{

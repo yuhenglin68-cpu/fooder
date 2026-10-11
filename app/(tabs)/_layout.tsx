@@ -10,14 +10,20 @@
 
 import { Tabs } from 'expo-router';
 import { BookOpen, Dices, Settings, Calendar } from 'lucide-react-native';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useColorScheme } from '@/components/useColorScheme';
+import { useSettingsStore } from '@/store/useSettingsStore';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const hasCustomBg = !!useSettingsStore((s) => s.customBgUri);
 
   // 动态避开系统虚拟导航键（安卓三大金刚键、手势横条、iOS Home Indicator）
   // 1. 当系统具有虚拟金刚键或手势指示条时（insets.bottom > 0）：
@@ -41,9 +47,35 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: colors.tint,
         tabBarInactiveTintColor: colors.tabIconDefault,
+        sceneStyle: {
+          backgroundColor: hasCustomBg ? 'transparent' : (isDark ? '#000000' : '#F2F2F7'),
+        },
+        tabBarBackground: hasCustomBg
+          ? () => (
+              <View style={StyleSheet.absoluteFill}>
+                <BlurView
+                  intensity={75}
+                  tint={isDark ? 'dark' : 'light'}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View
+                  style={[
+                    StyleSheet.absoluteFill,
+                    {
+                      backgroundColor: isDark
+                        ? 'rgba(28, 28, 30, 0.72)'
+                        : 'rgba(255, 255, 255, 0.75)',
+                    },
+                  ]}
+                />
+              </View>
+            )
+          : undefined,
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
+          backgroundColor: hasCustomBg ? 'transparent' : colors.surface,
+          borderTopColor: hasCustomBg
+            ? (isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)')
+            : colors.border,
           borderTopWidth: 0.5,
           height: tabHeight,
           paddingBottom: bottomPadding,

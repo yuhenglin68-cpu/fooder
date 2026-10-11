@@ -4,7 +4,7 @@
  * 将 RN 的 useColorScheme 返回值安全收敛为 'light' | 'dark'
  */
 
-import { useColorScheme } from 'react-native';
+import { useColorScheme } from '@/components/useColorScheme';
 import Colors, { type ThemeColors } from '@/constants/Colors';
 
 export type ColorScheme = 'light' | 'dark';

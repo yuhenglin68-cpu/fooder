@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDishStore } from '@/store/useDishStore';
 import { useLogStore } from '@/store/useLogStore';
 import type { Dish, MealType } from '@/database/types';
-import { useColorScheme } from '@/components/useColorScheme';
+import { GlobalBackground } from '@/components/GlobalBackground';
 
 const MEAL_TYPES: MealType[] = ['早餐', '饮品', '肉类', '素类', '汤类', '其它'];
 
@@ -66,6 +66,7 @@ export default function TodayScreen() {
 
   return (
     <View className="flex-1 bg-[#F2F2F7] dark:bg-[#000000]">
+      <GlobalBackground />
       <Tabs.Screen options={{ headerTitle: 'Fooder', tabBarLabel: '抽签' }} />
       
       <ScrollView

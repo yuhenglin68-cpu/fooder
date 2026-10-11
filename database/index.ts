@@ -85,6 +85,14 @@ function _initializeDatabase(db: SQLite.SQLiteDatabase): void {
   db.execSync(`
     CREATE INDEX IF NOT EXISTS idx_daily_logs_date ON daily_logs(date_string);
   `);
+
+  // 创建应用持久化设置表 (外观主题、自定义背景等)
+  db.execSync(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key   TEXT PRIMARY KEY NOT NULL,
+      value TEXT NOT NULL
+    );
+  `);
 }
 
 // ─── 唯一 ID 生成 ───────────────────────────────────────────
@@ -399,3 +407,31 @@ export function clearDatabase(): void {
   const db = getDatabase();
   db.runSync(`DELETE FROM dishes;`);
 }
+
+// ─── 应用全局配置持久化 ─────────────────────────────────────
+
+/** 获取配置项 */
+export function getSetting(key: string, defaultValue = ''): string {
+  const db = getDatabase();
+  const row = db.getFirstSync<{ value: string }>(
+    `SELECT value FROM app_settings WHERE key = ?`,
+    [key]
+  );
+  return row ? row.value : defaultValue;
+}
+
+/** 设置或更新配置项 */
+export function setSetting(key: string, value: string): void {
+  const db = getDatabase();
+  db.runSync(
+    `INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)`,
+    [key, value]
+  );
+}
+
+/** 移除配置项 */
+export function removeSetting(key: string): void {
+  const db = getDatabase();
+  db.runSync(`DELETE FROM app_settings WHERE key = ?`, [key]);
+}
+

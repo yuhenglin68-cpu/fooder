@@ -18,6 +18,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/components/useColorScheme';
 import { getDatabase } from '@/database';
 import { ensureImageDirectory } from '@/utils/fileManager';
+import { useSettingsStore } from '@/store/useSettingsStore';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -33,6 +34,8 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const hasCustomBg = !!useSettingsStore((s) => s.customBgUri);
 
   useEffect(() => {
     try {
@@ -41,10 +44,13 @@ export default function RootLayout() {
 
       // 2. 确保图片沙盒目录存在（同步）
       ensureImageDirectory();
+
+      // 3. 加载并应用外观设置与自定义背景
+      useSettingsStore.getState().loadSettings();
     } catch (e) {
       console.error('[RootLayout] 初始化失败:', e);
     } finally {
-      // 3. 隐藏启动屏
+      // 4. 隐藏启动屏
       SplashScreen.hideAsync();
     }
   }, []);
@@ -72,8 +78,18 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? darkTheme : lightTheme}>
-        <Stack>
+      <ThemeProvider value={isDark ? darkTheme : lightTheme}>
+        <Stack
+          screenOptions={{
+            contentStyle: {
+              backgroundColor: hasCustomBg
+                ? 'transparent'
+                : isDark
+                  ? '#000000'
+                  : '#F2F2F7',
+            },
+          }}
+        >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen
             name="add-dish"
@@ -81,6 +97,10 @@ export default function RootLayout() {
               title: '新建菜谱',
               headerBackTitle: '返回',
               presentation: 'card',
+              headerStyle: {
+                backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+              },
+              headerTintColor: isDark ? '#FFFFFF' : '#1A1A2E',
             }}
           />
           <Stack.Screen
@@ -89,11 +109,15 @@ export default function RootLayout() {
               title: '编辑菜谱',
               headerBackTitle: '返回',
               presentation: 'card',
+              headerStyle: {
+                backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+              },
+              headerTintColor: isDark ? '#FFFFFF' : '#1A1A2E',
             }}
           />
         </Stack>
-        <StatusBar style="auto" />
-        {Platform.OS === 'android' && <NavigationBar style="auto" />}
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        {Platform.OS === 'android' && <NavigationBar style={isDark ? 'light' : 'dark'} />}
       </ThemeProvider>
     </SafeAreaProvider>
   );
