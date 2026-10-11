@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Appearance } from 'react-native';
+import { Appearance, Platform } from 'react-native';
 import { colorScheme as nwColorScheme } from 'nativewind';
 import { getSetting, setSetting } from '@/database';
 import { deleteImageFromSandbox } from '@/utils/fileManager';
@@ -22,19 +22,48 @@ interface SettingsState {
 
 /** 同步应用外观主题至 NativeWind 与系统 Appearance */
 export function applyThemeMode(mode: ThemeMode) {
+  // 1. NativeWind 颜色方案设置 (安全调用)
   try {
-    if (mode === 'light') {
-      nwColorScheme.set('light');
-      Appearance.setColorScheme('light');
-    } else if (mode === 'dark') {
-      nwColorScheme.set('dark');
-      Appearance.setColorScheme('dark');
-    } else {
-      nwColorScheme.set('system');
-      Appearance.setColorScheme('unspecified');
+    if (nwColorScheme && typeof nwColorScheme.set === 'function') {
+      nwColorScheme.set(mode === 'auto' ? 'system' : mode);
     }
-  } catch (error) {
-    console.warn('[useSettingsStore] applyThemeMode failed:', error);
+  } catch {
+    // 忽略内部 media/class flag 冲突，防止打断应用运行
+  }
+
+  // 2. Web 环境下在 html 根节点同步注入 / 移除 'dark' class
+  if (Platform.OS === 'web' && typeof document !== 'undefined') {
+    try {
+      const root = document.documentElement;
+      if (mode === 'dark') {
+        root.classList.add('dark');
+      } else if (mode === 'light') {
+        root.classList.remove('dark');
+      } else {
+        const isSystemDark =
+          typeof window !== 'undefined' &&
+          window.matchMedia &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (isSystemDark) {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+      }
+    } catch {}
+  }
+
+  // 3. React Native 系统 Appearance (仅在平台原生且方法存在时安全调用)
+  if (Platform.OS !== 'web' && typeof Appearance?.setColorScheme === 'function') {
+    try {
+      if (mode === 'light' || mode === 'dark') {
+        Appearance.setColorScheme(mode);
+      } else {
+        Appearance.setColorScheme('unspecified');
+      }
+    } catch {
+      // 部分 Android 版本或 Expo Go 环境可能不支持动态修改系统级 Appearance，安全捕获
+    }
   }
 }
 

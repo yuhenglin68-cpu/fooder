@@ -211,11 +211,13 @@ export default function LogsScreen() {
               const dishName = log.dish?.name || '未知菜品';
               const ings = log.dish?.ingredients || [];
               ings.forEach((ing, idx) => {
+                const rawAmount = (ing.amount || '').trim();
+                const isModerate = rawAmount === '适量' || rawAmount === '（适量）' || rawAmount === '(适量)';
                 dayIngredients.push({
                   key: `${log.dishId}_${idx}_${ing.name}`,
                   dishId: log.dishId,
                   name: ing.name,
-                  amount: ing.amount || '',
+                  amount: isModerate ? '' : rawAmount,
                   dishName,
                 });
               });
@@ -352,7 +354,7 @@ export default function LogsScreen() {
                                 >
                                   {item.name}
                                 </Text>
-                                {item.amount ? (
+                                {item.amount && !['适量', '（适量）', '(适量)'].includes(item.amount.trim()) ? (
                                   <Text
                                     className={`text-[12px] ml-2 ${
                                       isChecked

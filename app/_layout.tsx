@@ -7,11 +7,11 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import '../global.css';
 
-import { NavigationBar } from 'expo-navigation-bar';
+import { setStyle as setNavigationBarStyle } from 'expo-navigation-bar';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -19,6 +19,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { getDatabase } from '@/database';
 import { ensureImageDirectory } from '@/utils/fileManager';
 import { useSettingsStore } from '@/store/useSettingsStore';
+import { SplashScreenAnimation } from '@/components/SplashScreenAnimation';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -36,6 +37,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const hasCustomBg = !!useSettingsStore((s) => s.customBgUri);
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     try {
@@ -54,6 +56,15 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, []);
+
+  // 同步 Android 虚拟导航键前景色（深浅自适应，纯容错）
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      try {
+        setNavigationBarStyle(isDark ? 'light' : 'dark');
+      } catch {}
+    }
+  }, [isDark]);
 
   // 自定义导航主题色
   const lightTheme = {
@@ -117,8 +128,10 @@ export default function RootLayout() {
           />
         </Stack>
         <StatusBar style={isDark ? 'light' : 'dark'} />
-        {Platform.OS === 'android' && <NavigationBar style={isDark ? 'light' : 'dark'} />}
       </ThemeProvider>
+      {showSplash && (
+        <SplashScreenAnimation onFinish={() => setShowSplash(false)} />
+      )}
     </SafeAreaProvider>
   );
 }

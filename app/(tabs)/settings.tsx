@@ -38,7 +38,6 @@ import {
   Palette, 
   SlidersHorizontal,
   Check,
-  Dices,
   Lock,
   WifiOff,
   FolderLock
@@ -295,22 +294,31 @@ export default function SettingsScreen() {
                       <Pressable
                         key={opt.mode}
                         onPress={() => setThemeMode(opt.mode)}
-                        className={`flex-row items-center px-2.5 py-1.5 rounded-lg ${
-                          isSelected 
-                            ? 'bg-white dark:bg-[#2C2C2E] shadow-sm' 
-                            : 'opacity-70 active:opacity-100'
-                        }`}
+                        className="flex-row items-center px-2.5 py-1.5 rounded-lg"
+                        style={{
+                          backgroundColor: isSelected
+                            ? (isDark ? '#2C2C2E' : '#FFFFFF')
+                            : 'transparent',
+                          opacity: isSelected ? 1 : 0.75,
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: isSelected ? 0.08 : 0,
+                          shadowRadius: 2,
+                          elevation: isSelected ? 1 : 0,
+                        }}
                       >
                         <IconComp 
                           size={13} 
                           color={isSelected ? '#FF6B35' : (isDark ? '#A1A1AA' : '#71717A')} 
                           strokeWidth={isSelected ? 2.5 : 2}
                         />
-                        <Text className={`text-[12px] ml-1.5 ${
-                          isSelected 
-                            ? 'font-bold text-[#FF6B35]' 
-                            : 'font-medium text-neutral-600 dark:text-neutral-400'
-                        }`}>
+                        <Text 
+                          className="text-[12px] ml-1.5"
+                          style={{
+                            fontWeight: isSelected ? '700' : '500',
+                            color: isSelected ? '#FF6B35' : (isDark ? '#A1A1AA' : '#71717A'),
+                          }}
+                        >
                           {opt.label}
                         </Text>
                       </Pressable>
@@ -408,9 +416,8 @@ export default function SettingsScreen() {
                 <Pressable
                   onPress={refreshStorage}
                   hitSlop={10}
-                  className={`p-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 ${
-                    isRefreshingStorage ? 'opacity-50' : 'active:opacity-70'
-                  }`}
+                  className="p-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 active:opacity-70"
+                  style={{ opacity: isRefreshingStorage ? 0.5 : 1 }}
                 >
                   <RefreshCw size={13} color={isDark ? '#A1A1AA' : '#71717A'} />
                 </Pressable>
@@ -781,8 +788,12 @@ export default function SettingsScreen() {
           <ScrollView className="flex-1 pt-5" showsVerticalScrollIndicator={false}>
             {/* Logo 与版本标语 */}
             <View className="items-center mb-6">
-              <View className="w-20 h-20 rounded-3xl bg-[#FF6B35] items-center justify-center shadow-lg shadow-orange-500/30 mb-3">
-                <Dices size={42} color="#FFFFFF" strokeWidth={2.2} />
+              <View className="w-20 h-20 rounded-3xl overflow-hidden bg-white border border-black/5 dark:border-white/10 items-center justify-center shadow-md shadow-black/10 mb-3">
+                <Image 
+                  source={require('@/assets/images/icon.png')} 
+                  className="w-20 h-20" 
+                  resizeMode="cover"
+                />
               </View>
               <Text className="text-[24px] font-black text-neutral-900 dark:text-white tracking-tight">
                 Fooder

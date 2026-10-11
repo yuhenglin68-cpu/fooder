@@ -141,7 +141,7 @@ export default function AddDishScreen() {
         if (match) {
           return { name: match[1].trim(), amount: match[2].trim() };
         }
-        return { name: line, amount: '适量' };
+        return { name: line, amount: '' };
       });
   };
 
