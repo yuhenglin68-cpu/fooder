@@ -4,6 +4,17 @@
 
 ---
 
+## 📱 Android APK 现成安装包下载
+
+无需配置任何 Node/React Native 编译环境，支持直接下载独立 APK 安装体验：
+
+- 📥 **直链极速下载**：[点击下载 Fooder v1.0.0 正式版 APK](https://expo.dev/artifacts/eas/Vc-5guzBeSg4lztntuhX2KYJ0znGhr3xrJYpfS3y4Y0.apk)
+- 📋 **EAS 云端构建详情**：[Expo EAS Build 记录 (#be9c87b8)](https://expo.dev/accounts/henrylim000/projects/fooder/builds/be9c87b8-59dd-4be1-87b1-a5f7d10a93ff)
+
+> 💡 **安装提示**：为独立原生打包，无内置广告，纯本地离线单机运行。安卓安装时若系统提示“来自未知来源”，点击“继续安装”即可。
+
+---
+
 ## ✨ 核心特性
 
 - 🎲 **随机抽签选菜**：告别选择困难症！支持按餐别、荤素偏好随机摇号抽取今日菜单，抽取结果可一键平分添加到今日或明日菜单。
@@ -39,7 +50,7 @@
 ### 安装与启动
 ```bash
 # 1. 克隆代码仓库
-git clone <your-repository-url>
+git clone https://github.com/yuhenglin68-cpu/fooder.git
 cd fooder
 
 # 2. 安装依赖
